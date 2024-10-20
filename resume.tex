@@ -1,0 +1,848 @@
+
+\documentclass[french,11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{geometry}
+\usepackage{hyperref}
+\geometry{hmargin=3cm,vmargin=3cm}
+
+\title{Programmation Avancée - Langage C}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\section{Gestion de la Mémoire}
+
+\subsection{Mémoire d’un programme}
+En C, deux espaces mémoires principaux sont utilisés :
+\begin{itemize}
+    \item \textbf{Pile (Stack)} : Mémoire à durée limitée, utilisée pour les variables locales et les appels de fonction.
+    \item \textbf{Tas (Heap)} : Mémoire disponible pendant l’exécution du programme. La gestion de cette mémoire est à la charge du programmeur (allocation/libération).
+\end{itemize}
+
+\subsubsection{Pile (Stack)}
+\begin{itemize}
+    \item Mémoire réservée pour l'exécution d'une fonction.
+    \item Disparaît une fois la fonction exécutée.
+    \item Les paramètres de fonction sont passés en \textbf{copie} (sauf pour les tableaux).
+    \item Utilisée pour les \textbf{variables simples}.
+\end{itemize}
+
+\subsubsection{Tas (Heap)}
+\begin{itemize}
+    \item Mémoire allouée pendant l'exécution, persiste jusqu’à libération.
+    \item Seule l’adresse est communiquée, pas la donnée.
+    \item La gestion de la mémoire est plus complexe : \textbf{Déclaration, Allocation, Libération}.
+\end{itemize}
+
+\subsection{Allocation de mémoire}
+En C, différentes fonctions sont disponibles pour allouer de la mémoire dynamique :
+
+\subsubsection{malloc()}
+Alloue une zone mémoire :
+\begin{verbatim}
+void * malloc(size_t taille_totale);
+\end{verbatim}
+\begin{itemize}
+    \item Renvoie un pointeur sur la zone allouée ou \texttt{NULL} en cas d’échec.
+\end{itemize}
+
+\subsubsection{calloc()}
+Similaire à \texttt{malloc()} mais initialise à 0.
+
+\subsubsection{realloc()}
+Redimensionne une zone mémoire déjà allouée.
+
+\subsection{Connaître la taille d’un type}
+La fonction \texttt{sizeof} permet de déterminer la taille en octets d’un type :
+\begin{verbatim}
+size_t sizeof(type);
+\end{verbatim}
+\begin{itemize}
+    \item Fonctionne pour tous les types (int, float, struct, etc.) ainsi que pour les pointeurs.
+\end{itemize}
+
+\subsection{Manipulation de pointeurs}
+Un exemple basique de manipulation de pointeur :
+\begin{verbatim}
+int a = 114;
+int *b = NULL;
+b = &a;
+*b = 14;
+\end{verbatim}
+\begin{itemize}
+    \item \texttt{b} pointe vers \texttt{a}. En modifiant \texttt{*b}, la valeur de \texttt{a} devient 14.
+\end{itemize}
+
+\subsection{Gestion de la mémoire dynamique}
+
+\subsubsection{Allocation simple}
+Exemple d’allocation d’un entier sur le tas :
+\begin{verbatim}
+int *p = NULL;
+p = malloc(sizeof(int));
+if(p == NULL) { return -1; }
+*p = 25;
+\end{verbatim}
+\begin{itemize}
+    \item \texttt{malloc} alloue l’espace pour un entier.
+    \item Il est impératif de vérifier si l’allocation a réussi (via \texttt{NULL}).
+\end{itemize}
+
+\subsubsection{Libération de mémoire}
+La fonction \texttt{free()} libère la mémoire allouée :
+\begin{verbatim}
+void free(void *pointer);
+\end{verbatim}
+\begin{itemize}
+    \item Utiliser pour éviter les fuites de mémoire.
+\end{itemize}
+
+Exemple avec une correction :
+\begin{verbatim}
+int *a = malloc(sizeof(int));
+int *b = malloc(sizeof(int));
+*(a) = 10;
+*(b) = 15;
+free(a);
+a = b;
+\end{verbatim}
+\begin{itemize}
+    \item Il faut libérer la mémoire avant d'écraser le pointeur.
+\end{itemize}
+
+\subsection{Tableaux Dynamiques}
+
+\subsubsection{Tableau à une dimension}
+Création et utilisation :
+\begin{verbatim}
+int taille = 25;
+int *T = malloc(taille * sizeof(int));
+if(T == NULL) { return -1; }
+T[5] = 16;  // Accès via les crochets
+*(T + 5) = 16;  // Accès via pointeur
+\end{verbatim}
+
+\subsubsection{Tableau à deux dimensions}
+Allocation dynamique d’un tableau 2D :
+\begin{verbatim}
+int **T = NULL;
+T = malloc(5 * sizeof(int *));
+for(int i = 0; i < 5; i++) {
+    T[i] = malloc(4 * sizeof(int));
+}
+\end{verbatim}
+\begin{itemize}
+    \item Chaque ligne est un tableau alloué dynamiquement.
+\end{itemize}
+
+\subsubsection{Libération d’un tableau 2D}
+Pour libérer un tableau à deux dimensions :
+\begin{verbatim}
+for(int i = 0; i < 5; i++) {
+    free(T[i]);
+}
+free(T);
+T = NULL;
+\end{verbatim}
+
+\subsection{Allocation Dynamique de struct}
+Exemple avec une structure \texttt{coord} :
+\begin{verbatim}
+struct coord { int x; int y; };
+struct coord *point = malloc(sizeof(struct coord));
+point->x = 42;
+point->y = 566;
+free(point);
+\end{verbatim}
+\begin{itemize}
+    \item Accès aux attributs :
+    \begin{itemize}
+        \item Notation avec \texttt{*} : \texttt{(*point).x = 25;}
+        \item Notation avec \texttt{->} : \texttt{point->x = 42;}
+    \end{itemize}
+\end{itemize}
+\section{Entrées-Sorties: Stdio.h}
+
+\subsection{Manipulation de fichiers}
+Pour manipuler des fichiers en C, la bibliothèque \texttt{stdio.h} propose plusieurs fonctions, regroupées en quatre catégories :
+\begin{itemize}
+    \item Ouverture
+    \item Lecture
+    \item Écriture
+    \item Fermeture
+\end{itemize}
+
+\subsection{Ouverture de fichier}
+Avant de manipuler un fichier, il est nécessaire de l’ouvrir à l’aide de la fonction \texttt{fopen()}, qui permet d’obtenir un objet de type \texttt{FILE *}. Ce pointeur est utilisé pour interagir avec le fichier.
+
+\subsubsection{Le type FILE *}
+Le pointeur \texttt{FILE *} permet d'accéder au fichier, en maintenant un index pour la lecture et/ou l’écriture. Il est également possible d’ouvrir un fichier plusieurs fois pour différentes opérations simultanées. Les flux standards associés au type \texttt{FILE *} sont :
+\begin{itemize}
+    \item \texttt{stdin} : entrée standard (terminal/clavier).
+    \item \texttt{stdout} : sortie standard (terminal).
+    \item \texttt{stderr} : sortie d’erreur (terminal).
+\end{itemize}
+Ces flux sont ouverts par défaut pour chaque programme et permettent une gestion unifiée des entrées et sorties, qu’elles proviennent d’un fichier ou d’un terminal.
+
+\subsubsection{Ouverture avec \texttt{fopen()}}
+La fonction \texttt{fopen()} renvoie un pointeur \texttt{FILE *} ou \texttt{NULL} en cas d’erreur. Sa signature est :
+\begin{verbatim}
+FILE * fopen(const char *filename, const char *mode);
+\end{verbatim}
+\begin{itemize}
+    \item Le premier paramètre correspond au nom du fichier (avec le chemin, si nécessaire).
+    \item Le second paramètre définit le mode d’ouverture.
+\end{itemize}
+
+\subsubsection{Modes d’ouverture}
+Voici les principaux modes d’ouverture de fichiers :
+\begin{itemize}
+    \item \texttt{"r"} : Lecture seule.
+    \item \texttt{"w"} : Écriture seule (crée ou écrase le fichier).
+    \item \texttt{"a"} : Ajout à la fin du fichier.
+    \item \texttt{"rb"}, \texttt{"wb"}, \texttt{"ab"} : Modes en binaire (exécutables, compressés).
+    \item \texttt{"r+"} : Lecture/écriture avec curseur au début.
+    \item \texttt{"w+"} : Lecture/écriture, création du fichier et remise à zéro de sa taille.
+    \item \texttt{"a+"} : Lecture/écriture avec ajout à la fin (crée le fichier si absent).
+\end{itemize}
+
+\subsubsection{Échec de \texttt{fopen()}}
+La fonction \texttt{fopen()} peut échouer pour plusieurs raisons :
+\begin{itemize}
+    \item Le fichier n’existe pas.
+    \item Les droits d’accès ne sont pas compatibles avec le mode choisi.
+    \item Le système a atteint la limite du nombre de fichiers ouverts.
+\end{itemize}
+En cas d’échec, \texttt{fopen()} renvoie \texttt{NULL} et met à jour la variable globale \texttt{errno}. Pour afficher l’erreur, la fonction \texttt{perror()} peut être utilisée.
+
+\subsubsection{Exemple d'ouverture de fichier}
+\begin{verbatim}
+FILE * fd = fopen("test.txt", "r");
+if (fd == NULL) {
+    perror("Problème d'ouverture de fichier");
+    exit(-1);
+}
+\end{verbatim}
+
+\subsection{Fermeture du fichier}
+Une fois la manipulation du fichier terminée, il est nécessaire de le fermer avec la fonction \texttt{fclose()}, qui prend en paramètre le pointeur \texttt{FILE *}. La fermeture permet de libérer les ressources associées au fichier. \texttt{fclose()} renvoie 0 en cas de succès ou \texttt{EOF} en cas d'erreur.
+
+\subsection{Écritures dans les fichiers}
+
+\subsubsection{Fonction \texttt{fprintf()}}
+La fonction \texttt{fprintf()} permet d’écrire des données formatées dans un fichier, de manière similaire à \texttt{printf()}. Sa signature est :
+\begin{verbatim}
+int fprintf(FILE * stream, const char * format, ...);
+\end{verbatim}
+Elle renvoie le nombre d’octets écrits ou une valeur négative en cas d’erreur.
+
+\subsubsection{\texttt{fputc()}}
+La fonction \texttt{fputc()} permet d’écrire un seul caractère dans un fichier. Sa signature est :
+\begin{verbatim}
+int fputc(int char, FILE * stream);
+\end{verbatim}
+Elle avance le curseur d’une position et renvoie le caractère écrit ou \texttt{EOF} en cas d’échec.
+
+\subsubsection{\texttt{fputs()}}
+La fonction \texttt{fputs()} écrit une chaîne de caractères dans un fichier. Sa signature est :
+\begin{verbatim}
+int fputs(const char * str, FILE * stream);
+\end{verbatim}
+Elle renvoie le nombre d’octets écrits ou \texttt{EOF} en cas d’erreur.
+
+\subsubsection{\texttt{fwrite()}}
+La fonction \texttt{fwrite()} est utilisée pour écrire des données brutes dans un fichier. Elle ne formate pas les données et est adaptée à l’écriture de buffers ou de tableaux. Sa signature est :
+\begin{verbatim}
+size_t fwrite(const void * ptr, size_t size, size_t nmemb, FILE * stream);
+\end{verbatim}
+
+\subsection{Lecture depuis un fichier}
+
+\subsubsection{\texttt{fscanf()}}
+La fonction \texttt{fscanf()} se comporte comme \texttt{scanf()} mais pour lire à partir d’un fichier. Sa signature est :
+\begin{verbatim}
+int fscanf(FILE * stream, const char * format, ...);
+\end{verbatim}
+Elle renvoie le nombre de variables lues avec succès.
+
+\subsubsection{\texttt{fgetc()}}
+La fonction \texttt{fgetc()} lit un caractère à la fois depuis le fichier. Sa signature est :
+\begin{verbatim}
+int fgetc(FILE * stream);
+\end{verbatim}
+Elle renvoie le caractère lu ou \texttt{EOF} si la fin du fichier est atteinte ou s'il y a une erreur.
+
+\subsubsection{\texttt{fgets()}}
+La fonction \texttt{fgets()} permet de lire une chaîne de caractères dans un fichier. Elle prend en paramètres un tableau de caractères déjà alloué, la taille du tableau, et le flux :
+\begin{verbatim}
+char * fgets(char * str, int n, FILE * stream);
+\end{verbatim}
+Elle renvoie un pointeur sur la chaîne lue ou \texttt{NULL} en cas d'erreur ou de fin de fichier.
+
+\subsubsection{\texttt{fread()}}
+La fonction \texttt{fread()} lit des données brutes à partir d’un fichier, de la même manière que \texttt{fwrite()}. Sa signature est :
+\begin{verbatim}
+size_t fread(void * ptr, size_t size, size_t nmemb, FILE * stream);
+\end{verbatim}
+
+\subsection{Déplacement dans un fichier}
+
+\subsubsection{\texttt{ftell()}}
+La fonction \texttt{ftell()} permet de connaître la position actuelle du curseur dans un fichier. Sa signature est :
+\begin{verbatim}
+long int ftell(FILE * stream);
+\end{verbatim}
+Elle renvoie la position actuelle ou \texttt{-1L} en cas d’erreur.
+
+\subsubsection{\texttt{fseek()}}
+La fonction \texttt{fseek()} permet de déplacer le curseur dans le fichier à une position donnée. Sa signature est :
+\begin{verbatim}
+int fseek(FILE * stream, long int offset, int whence);
+\end{verbatim}
+\begin{itemize}
+    \item \texttt{SEEK\_SET} : Début du fichier.
+    \item \texttt{SEEK\_CUR} : Position courante du curseur.
+    \item \texttt{SEEK\_END} : Fin du fichier.
+\end{itemize}
+Elle renvoie 0 en cas de succès ou une valeur différente de 0 en cas d'erreur.
+
+\subsection{Autres fonctions utiles}
+
+\subsubsection{\texttt{fflush()}}
+La fonction \texttt{fflush()} permet de forcer l’écriture immédiate des données en attente dans un buffer. Sa signature est :
+\begin{verbatim}
+int fflush(FILE * stream);
+\end{verbatim}
+Elle renvoie 0 si tout s'est bien passé.
+
+\subsubsection{\texttt{feof()}}
+La fonction \texttt{feof()} permet de savoir si la fin d'un fichier a été atteinte. Sa signature
+
+\section{Entrées-Sorties (suite)}
+
+\subsection{Manipulation externe de fichiers}
+La bibliothèque \texttt{stdio.h} fournit des fonctions utiles pour manipuler les fichiers, y compris la suppression, le renommage et la création de fichiers temporaires.
+
+\subsubsection{Suppression de fichiers}
+On peut supprimer un fichier (à condition d'avoir les droits nécessaires) à l'aide de la fonction \texttt{remove}. Sa signature est la suivante :
+\begin{verbatim}
+int remove(const char *nom_fichier);
+\end{verbatim}
+Elle renvoie 0 en cas de succès et -1 en cas d'erreur, cette dernière pouvant être consultée via \texttt{perror}.
+
+\subsubsection{Renommage de fichier}
+La fonction \texttt{rename} permet de renommer un fichier. Sa signature est la suivante :
+\begin{verbatim}
+int rename(const char *old, const char *new);
+\end{verbatim}
+Elle renvoie 0 en cas de succès, et -1 sinon.
+
+\subsubsection{Création de fichier temporaire}
+Il est possible de créer des fichiers temporaires pour stocker des résultats intermédiaires :
+\begin{itemize}
+    \item Créer explicitement un fichier avec \texttt{fopen} et le supprimer ensuite avec \texttt{remove}.
+    \item Utiliser la fonction \texttt{tmpfile}, qui crée un fichier temporaire automatiquement supprimé lors de la fermeture du flux avec \texttt{fclose}.
+\end{itemize}
+
+\paragraph{Fonction \texttt{tmpname}}
+Cette fonction permet de générer un nom unique pour un fichier temporaire. Sa signature est :
+\begin{verbatim}
+char * tmpname(char *str);
+\end{verbatim}
+Elle renvoie un pointeur sur une chaîne de caractères contenant le nom de fichier, ou \texttt{NULL} en cas de problème.
+
+\paragraph{Fonction \texttt{tmpfile}}
+La fonction \texttt{tmpfile} crée un fichier temporaire et renvoie un pointeur vers une structure \texttt{FILE*}. Ce fichier est automatiquement supprimé lorsque le flux est fermé avec \texttt{fclose}.
+\begin{verbatim}
+FILE * tmpfile(void);
+\end{verbatim}
+
+\subsection{Fonctions \texttt{sscanf}, \texttt{sprintf}, et Variantes}
+Les fonctions de la famille \texttt{*scanf} permettent de lire et de convertir des chaînes de caractères en différentes valeurs. Deux fonctions principales ont été vues précédemment :
+\begin{itemize}
+    \item \texttt{scanf} pour lire depuis le terminal.
+    \item \texttt{fscanf} pour lire depuis un fichier.
+\end{itemize}
+
+\subsubsection{Lecture depuis une chaîne de caractères : \texttt{sscanf}}
+La fonction \texttt{sscanf} permet de lire des valeurs formatées à partir d'une chaîne de caractères. Sa signature est la suivante :
+\begin{verbatim}
+int sscanf(const char *str, const char *format, ...);
+\end{verbatim}
+Elle renvoie le nombre d'affectations correctes effectuées.
+
+\subsubsection{Écriture dans une chaîne de caractères : \texttt{sprintf}}
+La fonction \texttt{sprintf} permet d'écrire des valeurs formatées dans une chaîne de caractères. Sa signature est similaire à celle de \texttt{printf} :
+\begin{verbatim}
+int sprintf(char *str, const char *format, ...);
+\end{verbatim}
+Elle renvoie le nombre d'octets écrits, ou un nombre négatif en cas d'erreur.
+
+\subsection{Fonctions Variadiques}
+Une fonction variadique est une fonction qui accepte un nombre non déterminé de paramètres. L'exemple le plus célèbre est \texttt{printf}, où seul le premier paramètre (le format) est obligatoire.
+
+\subsubsection{Syntaxe d'une fonction variadique}
+Une fonction variadique doit comporter au moins un paramètre fixe, suivi d'une ellipse \texttt{...}, comme illustré ci-dessous :
+\begin{verbatim}
+int max(int nombre, ...);
+\end{verbatim}
+Dans cet exemple, \texttt{nombre} représente le nombre de paramètres qui suivront. 
+
+\subsubsection{Utilisation de \texttt{stdarg.h}}
+La bibliothèque \texttt{stdarg.h} permet de manipuler les paramètres variadiques à l'aide des macros suivantes :
+\begin{itemize}
+    \item \texttt{va\_start} pour initialiser la liste des paramètres.
+    \item \texttt{va\_arg} pour récupérer les paramètres un par un.
+    \item \texttt{va\_end} pour fermer la liste des paramètres.
+\end{itemize}
+
+\paragraph{Exemple : Fonction \texttt{max}}
+\begin{verbatim}
+int max(int nombre, ...) {
+    int resultat, i, m = 0;
+    va_list ap;
+    va_start(ap, nombre);
+    for (i = 0; i < nombre; i++) {
+        resultat = va_arg(ap, int);
+        if (resultat > m) {
+            m = resultat;
+        }
+    }
+    va_end(ap);
+    return m;
+}
+\end{verbatim}
+
+\subsection{Fonctions utiles de \texttt{stdlib.h}}
+\subsubsection{Fonction \texttt{exit}}
+La fonction \texttt{exit} permet de quitter le programme en fermant tous les fichiers ouverts et en retournant un statut au système d'exploitation :
+\begin{verbatim}
+void exit(int status);
+\end{verbatim}
+Le paramètre \texttt{status} est un entier que l'on peut récupérer dans le terminal à l'aide de la variable \texttt{\$?}.
+
+\paragraph{Exemple : Utilisation de \texttt{exit}}
+\begin{verbatim}
+void f() {
+    exit(1);
+}
+
+int main() {
+    f();
+    return 0;
+}
+\end{verbatim}
+Depuis le terminal :
+\begin{verbatim}
+$ ./exe
+$ echo $?
+1
+\end{verbatim}
+
+\subsubsection{Fonction \texttt{abort}}
+La fonction \texttt{abort} arrête le programme en cas d'erreur grave. Elle génère un fichier \texttt{core dump} qui peut être utilisé pour déboguer.
+
+\subsubsection{Fonction \texttt{system}}
+La fonction \texttt{system} permet d'exécuter des commandes du système. Elle renvoie 0 en cas de succès ou une valeur différente de 0 en cas d'erreur :
+\begin{verbatim}
+int r = system("ls -l");
+\end{verbatim}
+\section{Pointeurs de Fonctions et Unions}
+
+\subsection{Pointeurs de Fonctions}
+Les pointeurs de fonctions permettent d'apporter de la généricité dans le code en permettant de manipuler des fonctions comme des données.
+
+\subsubsection{Utilisation des Pointeurs de Fonctions}
+Par exemple, si nous disposons d'une fonction qui parcourt un tableau d'entiers pour calculer le maximum, et que nous souhaitons également calculer le minimum, nous devrions réécrire l'intégralité du code. Cependant, en utilisant des pointeurs de fonctions, nous pouvons changer le critère de sélection sans avoir à tout réécrire.
+
+\subsubsection{Syntaxe}
+Pour déclarer un pointeur de fonction, on utilise la syntaxe suivante :
+\begin{verbatim}
+int (*ma_fonction)(int, int);
+\end{verbatim}
+Ici, \texttt{*ma\_fonction} indique qu'il s'agit d'un pointeur de fonction qui prend deux entiers en paramètres.
+
+\subsubsection{Utilisation d'un Pointeur de Fonction}
+Une fois le pointeur déclaré, il peut pointer vers une fonction existante. Par exemple, si nous avons une fonction \texttt{max} qui renvoie le maximum entre deux entiers, nous pouvons l'appeler directement :
+\begin{verbatim}
+printf("Max(1,2): %d\n", max(1,2));
+\end{verbatim}
+Ou bien en utilisant le pointeur :
+\begin{verbatim}
+ma_fonction = &max;
+printf("%d\n", ma_fonction(1,2));
+\end{verbatim}
+
+\subsubsection{Remarques}
+Un pointeur de fonction n'est pas une définition de fonction. La déclaration du pointeur définit son type de retour ainsi que le type et le nombre des paramètres. Toute fonction ayant les mêmes propriétés peut être pointée par ce pointeur. De plus, un paramètre d'une fonction peut également être un pointeur de fonction.
+
+\subsubsection{Exemple : Fonction de Comparaison}
+Considérons une fonction de comparaison :
+\begin{verbatim}
+int cmp(int a, int b) {
+    if (a < b) return -1;
+    if (a == b) return 0;
+    return 1;
+}
+\end{verbatim}
+
+\paragraph{Exemple d'Utilisation}
+Nous pouvons avoir une fonction \texttt{extract} qui extrait un maximum basé sur un critère de comparaison passé en paramètre :
+\begin{verbatim}
+int extract(int *T, int n, int (*comp)(int,int)) {
+    int i, m = 0;
+    for (i = 1; i < n; i++) {
+        if (comp(T[m], T[i]) > 0) {
+            m = i;
+        }
+    }
+    return m;
+}
+\end{verbatim}
+
+\paragraph{Exemple d'Utilisation (suite)}
+Voici deux fonctions de comparaison :
+\begin{verbatim}
+int Max(int a, int b) {
+    return a < b ? +1 : -1;
+}
+
+int Min(int a, int b) {
+    return a > b ? +1 : -1;
+}
+\end{verbatim}
+
+Pour extraire les indices des maximum et minimum :
+\begin{verbatim}
+int A = extract(T, n, &Max); // Va extraire l'indice du maximum.
+int B = extract(T, n, &Min);  // Va extraire l'indice du minimum.
+\end{verbatim}
+
+\subsubsection{Fonction \texttt{qsort} de \texttt{stdlib}}
+La bibliothèque \texttt{stdlib} fournit une fonction de tri générique qui implémente l'algorithme Quicksort. Sa signature est :
+\begin{verbatim}
+void qsort(void *Base, size_t Nmemb, size_t Size, int (*compar)(const void*, const void*));
+\end{verbatim}
+Elle permet de trier n'importe quel tableau.
+
+\subsubsection{Utilisation de \texttt{qsort}}
+Pour utiliser \texttt{qsort}, vous devez définir une fonction de comparaison :
+\begin{verbatim}
+int MaxBis(int *a, int *b) {
+    return *a < *b ? +1 : -1;
+}
+\end{verbatim}
+Ensuite, vous pouvez l'appeler comme suit :
+\begin{verbatim}
+qsort(T, n, sizeof(int), &MaxBis);
+\end{verbatim}
+
+\subsection{Unions}
+Une union est similaire à une structure, mais tous ses membres partagent la même zone mémoire, ce qui permet de faciliter l'accès à des données de bas niveau.
+
+\subsubsection{Déclaration}
+Une union se déclare de la même manière qu'une structure. Par exemple :
+\begin{verbatim}
+union Simple {
+    int x;
+    float y;
+};
+\end{verbatim}
+
+\subsubsection{Instanciation}
+Voici comment instancier une union :
+\begin{verbatim}
+union Simple a;
+a.x = 259;
+// La valeur a.y est maintenant modifiée, car c'est la même zone mémoire.
+\end{verbatim}
+Dans cet exemple, la taille de l'union \texttt{Simple} est de 4 octets (la taille de l'entier ou du flottant).
+
+\subsubsection{Unions Complexes}
+Considérons une union plus complexe :
+\begin{verbatim}
+union Complexe {
+    double a;  // 8 octets
+    int b;     // 4 octets
+    short int c; // 2 octets
+    char d;    // 1 octet
+};
+\end{verbatim}
+La taille de cette union est de 8 octets, en raison de l'attribut de taille maximum (le \texttt{double}).
+
+\subsubsection{Accès aux Membres}
+Si l'on souhaite pouvoir accéder à tous les octets de plusieurs manières, on peut utiliser des tableaux et/ou des structures :
+\begin{verbatim}
+union X {
+    double a;
+    struct { int ia; int ib; } b; // structure anonyme
+    char d[8];
+};
+\end{verbatim}
+Vous pouvez ensuite accéder à ces membres :
+\begin{verbatim}
+union X instance;
+instance.a = 256000;
+instance.b.ia = 999;
+instance.d[7] = 89;
+\end{verbatim}
+
+\subsubsection{Limites des Unions}
+Les unions sont d'un usage limité, souvent utilisées pour des opérations de bas niveau, comme la modification individuelle de bits. Il est essentiel de ne pas les confondre avec les structures.
+
+\subsection{Alignements des Données / Padding}
+Les tailles de données peuvent varier selon l'architecture. Par exemple, considérons une structure contenant deux entiers et deux entiers courts :
+\begin{verbatim}
+struct s1 {
+    int a;         // 4 octets
+    int b;         // 4 octets
+    short int c;   // 2 octets
+    short int d;   // 2 octets
+};
+\end{verbatim}
+La taille de cette structure serait de 12 octets, car il n'y a pas de perte d'espace.
+
+\subsubsection{Scénario Alternatif}
+Pour une autre structure :
+\begin{verbatim}
+struct s2 {
+    short int c;   // 2 octets
+    int a;         // 4 octets
+    int b;         // 4 octets
+    short int d;   // 2 octets
+};
+\end{verbatim}
+Dans ce cas, la taille totale pourrait être de 16 octets, avec 4 octets perdus à cause de l'alignement.
+
+\subsubsection{Problème de Sérialisation}
+La sérialisation d'une structure consiste à l'écrire en mémoire. Par exemple :
+\begin{verbatim}
+struct s2 instance;
+//...
+fwrite(&instance, sizeof(struct s2), 1, fd);
+\end{verbatim}
+Cela écrit l'intégralité de l'instance dans un fichier.
+\section{Entrées/Sorties : Fonctions printf, scanf et la bibliothèque string.h}
+
+\subsection{Introduction à stdio.h}
+Le fichier d'en-tête \texttt{stdio.h} est essentiel dans le langage C pour effectuer des opérations d'entrée/sortie. Il contient les déclarations de plusieurs fonctions qui permettent de lire des données depuis le terminal ou des fichiers, ainsi que d'afficher des informations à l'écran.
+
+\subsection{La fonction printf}
+La fonction \texttt{printf} est utilisée pour afficher du texte ou des variables sur la sortie standard, généralement la console. Sa syntaxe est la suivante :
+
+\begin{verbatim}
+int printf(const char *format, ...);
+\end{verbatim}
+
+Le paramètre \texttt{format} est une chaîne de caractères qui peut contenir du texte à afficher ainsi que des spécificateurs de format qui indiquent le type de données à afficher. Les spécificateurs de format courants incluent :
+
+- \texttt{\%d} ou \texttt{\%i} : Pour afficher un entier signé.
+- \texttt{\%u} : Pour afficher un entier non signé.
+- \texttt{\%o} : Pour afficher un entier en notation octale.
+- \texttt{\%x} : Pour afficher un entier en notation hexadécimale (en minuscules).
+- \texttt{\%X} : Pour afficher un entier en notation hexadécimale (en majuscules).
+- \texttt{\%f} : Pour afficher un nombre flottant.
+- \texttt{\%s} : Pour afficher une chaîne de caractères.
+- \texttt{\%c} : Pour afficher un caractère.
+- \texttt{\%p} : Pour afficher l'adresse d'un pointeur.
+- \texttt{\%\%} : Pour afficher un symbole de pourcentage (\%).
+
+Par exemple, pour afficher un message simple, on peut utiliser :
+
+\begin{verbatim}
+printf("Bonjour !\n");
+\end{verbatim}
+
+Pour afficher des variables, on peut procéder comme suit :
+
+\begin{verbatim}
+int i = 10;
+char c = 'A';
+printf("i vaut %d, c vaut %c\n", i, c);
+\end{verbatim}
+
+\subsection{La fonction scanf}
+La fonction \texttt{scanf} est utilisée pour lire des données saisies par l'utilisateur. Sa syntaxe est la suivante :
+
+\begin{verbatim}
+int scanf(const char *format, ...);
+\end{verbatim}
+
+Le paramètre \texttt{format} contient des spécificateurs qui indiquent le type de données à lire. Par exemple, pour lire un entier, on peut utiliser :
+
+\begin{verbatim}
+int a;
+printf("Entrez un entier : ");
+scanf("%d", &a);
+\end{verbatim}
+
+Il est essentiel de vérifier si l'entrée est valide, car une saisie incorrecte peut provoquer un comportement inattendu. 
+
+\subsection{La bibliothèque string.h}
+Le fichier d'en-tête \texttt{string.h} fournit un ensemble de fonctions utiles pour manipuler des chaînes de caractères et des blocs de mémoire. Voici un aperçu des principales fonctions disponibles :
+
+La fonction \texttt{memccpy} permet de copier un bloc de mémoire dans un second bloc en s'arrêtant après la première occurrence d'un caractère. Sa syntaxe est :
+
+\begin{verbatim}
+void *memccpy(void *dest, const void *src, int c, size_t n);
+\end{verbatim}
+
+La fonction \texttt{memchr} recherche la première occurrence d'une valeur dans un bloc de mémoire. Sa syntaxe est :
+
+\begin{verbatim}
+void *memchr(const void *s, int c, size_t n);
+\end{verbatim}
+
+La fonction \texttt{memcmp} compare le contenu de deux blocs de mémoire et renvoie un entier indiquant leur ordre. Sa syntaxe est :
+
+\begin{verbatim}
+int memcmp(const void *s1, const void *s2, size_t n);
+\end{verbatim}
+
+La fonction \texttt{memcpy} copie un bloc de mémoire dans un second bloc, sans considérer les chevauchements. Sa syntaxe est :
+
+\begin{verbatim}
+void *memcpy(void *dest, const void *src, size_t n);
+\end{verbatim}
+
+La fonction \texttt{memmove} permet de copier un bloc de mémoire même si les deux blocs se chevauchent. Sa syntaxe est :
+
+\begin{verbatim}
+void *memmove(void *dest, const void *src, size_t n);
+\end{verbatim}
+
+La fonction \texttt{memset} remplit une zone mémoire avec une valeur précise. Sa syntaxe est :
+
+\begin{verbatim}
+void *memset(void *s, int c, size_t n);
+\end{verbatim}
+
+La fonction \texttt{strcat} ajoute une chaîne de caractères à la suite d'une autre. Sa syntaxe est :
+
+\begin{verbatim}
+char *strcat(char *dest, const char *src);
+\end{verbatim}
+
+La fonction \texttt{strchr} recherche la première occurrence d'un caractère dans une chaîne de caractères. Sa syntaxe est :
+
+\begin{verbatim}
+char *strchr(const char *str, int character);
+\end{verbatim}
+
+La fonction \texttt{strcmp} compare deux chaînes de caractères pour déterminer si elles sont égales, ou si l'une est inférieure ou supérieure à l'autre. Sa syntaxe est :
+
+\begin{verbatim}
+int strcmp(const char *str1, const char *str2);
+\end{verbatim}
+
+La fonction \texttt{strcoll} compare deux chaînes de caractères en tenant compte des règles de localisation. Sa syntaxe est :
+
+\begin{verbatim}
+int strcoll(const char *str1, const char *str2);
+\end{verbatim}
+
+La fonction \texttt{strcpy} permet de copier une chaîne de caractères d'une variable à une autre. Sa syntaxe est :
+
+\begin{verbatim}
+char *strcpy(char *dest, const char *src);
+\end{verbatim}
+
+La fonction \texttt{strcspn} renvoie la longueur de la plus grande sous-chaîne, en partant du début de la chaîne, ne contenant aucun des caractères spécifiés dans une liste de rejet. Sa syntaxe est :
+
+\begin{verbatim}
+size_t strcspn(const char *s, const char *reject);
+\end{verbatim}
+
+La fonction \texttt{strdup} duplique la chaîne de caractères passée en paramètre. Sa syntaxe est :
+
+\begin{verbatim}
+char *strdup(const char *s);
+\end{verbatim}
+
+La fonction \texttt{strerror} renvoie la chaîne de caractères associée à un code d'erreur stocké dans la variable entière \texttt{errno}. Sa syntaxe est :
+
+\begin{verbatim}
+char *strerror(int errnum);
+\end{verbatim}
+
+La fonction \texttt{strlen} calcule la longueur d'une chaîne de caractères, sans compter le caractère nul `\texttt{\\0}`. Sa syntaxe est :
+
+\begin{verbatim}
+size_t strlen(const char *str);
+\end{verbatim}
+
+La fonction \texttt{strncat} ajoute une chaîne de caractères à la suite d'une autre, en limitant le nombre maximum de caractères copiés. Sa syntaxe est :
+
+\begin{verbatim}
+char *strncat(char *dest, const char *src, size_t n);
+\end{verbatim}
+
+La fonction \texttt{strncmp} compare deux chaînes de caractères, mais uniquement jusqu'à la taille spécifiée. Sa syntaxe est :
+
+\begin{verbatim}
+int strncmp(const char *str1, const char *str2, size_t n);
+\end{verbatim}
+
+La fonction \texttt{strncpy} copie, au plus, les n premiers caractères d'une chaîne de caractères dans une autre. Sa syntaxe est :
+
+\begin{verbatim}
+char *strncpy(char *dest, const char *src, size_t n);
+\end{verbatim}
+
+La fonction \texttt{strndup} duplique au plus n caractères de la chaîne passée en paramètre. Sa syntaxe est :
+
+\begin{verbatim}
+char *strndup(const char *s, size_t n);
+\end{verbatim}
+
+La fonction \texttt{strpbrk} recherche dans une chaîne de caractères la première occurrence d'un caractère parmi une liste de caractères autorisés. Sa syntaxe est :
+
+\begin{verbatim}
+char *strpbrk(const char *s, const char *accept);
+\end{verbatim}
+
+La fonction \texttt{strrchr} recherche la dernière occurrence d'un caractère dans une chaîne de caractères. Sa syntaxe est :
+
+\begin{verbatim}
+char *strrchr(const char *str, int character);
+\end{verbatim}
+
+La fonction \texttt{strspn} renvoie la longueur de la plus grande sous-chaîne ne contenant que des caractères spécifiés dans une liste de caractères acceptés. Sa syntaxe est :
+
+\begin{verbatim}
+size_t strspn(const char *s, const char *accept);
+\end{verbatim}
+
+La fonction \texttt{strstr} recherche la première occurrence d'une sous-chaîne dans une chaîne principale. Sa syntaxe est :
+
+\begin{verbatim}
+char *strstr(const char *haystack, const char *needle);
+\end{verbatim}
+
+La fonction \texttt{strtok} permet d'extraire, un à un, tous les éléments syntaxiques (tokens) d'une chaîne de caractères, en utilisant un ensemble de délimiteurs. Sa syntaxe est :
+
+\begin{verbatim}
+char *strtok(char *str, const char *delim);
+\end{verbatim}
+
+Enfin, la fonction \texttt{strxfrm} transforme les n premiers caractères d'une chaîne source en tenant compte de la localisation en cours, et les place dans la chaîne de destination. Sa syntaxe est :
+
+\begin{verbatim}
+size_t strxfrm(char *dest, const char *src, size_t n);
+\end{verbatim}
+
+Ces fonctions constituent une base solide pour la manipulation de chaînes et de mémoire en C, offrant une flexibilité et des capacités étendues pour le traitement des données.
+
+\end{document}
